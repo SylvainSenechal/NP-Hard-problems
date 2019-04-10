@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TSP 2-opt</title>
+        <script src="TSPjs.js" defer></script>
+    </head>
+    <body>
+      <div class="container">
+        <div class="parameters">
+          <button onclick="minimize()"> Minimize path
+          </button>
+          <button onclick="maximize()"> Maximize path
+          </button>
+          <button onclick="addPoint()"> add a point
+          </button>
+          <button onclick="removePoint()"> remove a point
+          </button>
+        </div>
+        <div class="canvas">
+          <canvas id="mon_canvas">
+              Message pour les navigateurs ne supportant pas encore canvas.
+          </canvas>
+        </div>
+      </div>
+    </body>
+</html>
+<style>
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  display: grid;
+  width: 100vw;
+  height: 100vh;
+
+  grid-template-rows: 30px auto;
+  grid-template-areas: ' parameters '
+                       ' canvas     ';
+}
+#mon_canvas {
+  display: block;
+}
+.parameters{
+  grid-area: parameters;
+}
+.canvas{
+  grid-area: canvas;
+}
+
+</style>

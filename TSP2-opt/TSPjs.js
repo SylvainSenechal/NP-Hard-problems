@@ -3,20 +3,18 @@
 let ctx, canvas
 let width, height
 let tsp
-const NB_POINTS = 200
-const WIDTH = 1800
-const HEIGHT = 900
 
 const init = () => {
   canvas = document.getElementById('mon_canvas')
   ctx = canvas.getContext('2d')
-  width = window.innerWidth
-  height = window.innerHeight
-  ctx.canvas.width = width
-  ctx.canvas.height = height
+  let sizeCanvas = document.getElementsByClassName('canvas')
+  ctx.canvas.width = sizeCanvas[0].clientWidth
+  ctx.canvas.height = sizeCanvas[0].clientHeight
+  width = sizeCanvas[0].clientWidth
+  height = sizeCanvas[0].clientHeight
 	ctx.font = "20px Comic Sans MS"
 
-  tsp = new TSP()
+  tsp = new TSP(width, height)
   tsp.draw()
 
   loop()
@@ -25,7 +23,7 @@ const init = () => {
 const loop = () => {
   tsp.optimize()
   console.log("Distance : ", TSP.computeTotalDst(tsp.listPoints))
-  requestAnimationFrame(loop);
+  requestAnimationFrame(loop)
 }
 
 // TODO: Chose maximisation or min
@@ -34,16 +32,18 @@ const loop = () => {
 // TODO: Ajouter ou retirer points, de façon dynamique, en cours d'algo
 // TODO: Ajouter courbe evolution dst
 class TSP {
-  constructor() {
+  constructor(width, height, nbPoints = 10) {
+    this.nbPoints = nbPoints
     this.listPoints = []
     this.totalDst = 0
-    this.initPoints()
+    this.initPoints(width-100, height-100)
     this.indice = 0
+    this.optimize = this.minimize
   }
 
-  initPoints(nbPoints) {
-    for (let i = 0; i < NB_POINTS; i++) {
-      this.listPoints.push( new Point() )
+  initPoints(width, height) {
+    for (let i = 0; i < this.nbPoints; i++) {
+      this.listPoints.push( new Point(width, height) )
     }
   }
 
@@ -51,7 +51,7 @@ class TSP {
     let x1, x2, y1, y2 = 0
     let dst = 0
 
-    for (let i = 0; i < NB_POINTS - 1; i++) {
+    for (let i = 0; i < path.length - 1; i++) {
       x1 = path[i].x
       x2 = path[i+1].x
       y1 = path[i].y
@@ -64,22 +64,38 @@ class TSP {
   swapOpt(p1, p2) {
     let start = this.listPoints.slice(0, p1)
     let middle =  this.listPoints.slice(p1, p2).reverse()
-    let end = this.listPoints.slice(p2, NB_POINTS)
+    let end = this.listPoints.slice(p2, this.nbPoints)
 
     let path = [... start, ...middle, ...end]
     return path
   }
 
-  optimize() {
-    if (this.indice === NB_POINTS - 1) this.indice = 0
+  minimize() {
+    if (this.indice === this.nbPoints - 1) this.indice = 0
     loop:
-    for (let i = this.indice; i < NB_POINTS - 1; i++) {
+    for (let i = this.indice; i < this.nbPoints - 1; i++) {
       this.indice++
-      for (let k = i + 1; k < NB_POINTS; k++) {
-        let path = tsp.swapOpt(i, k)
-        if (TSP.computeTotalDst(path) < TSP.computeTotalDst(tsp.listPoints)) {
-          tsp.listPoints = path
-          tsp.draw()
+      for (let k = i + 1; k < this.nbPoints; k++) {
+        let path = this.swapOpt(i, k)
+        if (TSP.computeTotalDst(path) < TSP.computeTotalDst(this.listPoints)) {
+          this.listPoints = path
+          this.draw()
+          break loop
+        }
+      }
+    }
+  }
+
+  maximize() {
+    if (this.indice === this.nbPoints - 1) this.indice = 0
+    loop:
+    for (let i = this.indice; i < this.nbPoints - 1; i++) {
+      this.indice++
+      for (let k = i + 1; k < this.nbPoints; k++) {
+        let path = this.swapOpt(i, k)
+        if (TSP.computeTotalDst(path) > TSP.computeTotalDst(this.listPoints)) {
+          this.listPoints = path
+          this.draw()
           break loop
         }
       }
@@ -87,10 +103,10 @@ class TSP {
   }
 
   draw() {
-    ctx.clearRect(0, 0, WIDTH + 50, 2 * (HEIGHT + 50))
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
     ctx.fillStyle = "#000000"
 
-    for (let i = 0; i < NB_POINTS; i++) { // Dessine les points
+    for (let i = 0; i < this.nbPoints; i++) { // Dessine les points
       ctx.beginPath()
       ctx.arc(this.listPoints[i].x + 50, this.listPoints[i].y + 50, 5, 0, 2*Math.PI)
       ctx.fill()
@@ -98,27 +114,37 @@ class TSP {
 
     ctx.beginPath()
     ctx.moveTo(this.listPoints[0].x + 50, this.listPoints[0].y + 50) // Dessine le chemin entre les points
-    for (let i = 1; i < NB_POINTS; i++) {
+    for (let i = 1; i < this.nbPoints; i++) {
       ctx.lineTo(this.listPoints[i].x + 50, this.listPoints[i].y + 50)
     }
     ctx.stroke()
-    // return new Promise(resolve => {} )
-    // return new Promise(resolve => {
-    //   setTimeout(() => {
-    //     resolve('resolved');
-    //   }, 2000);
-    // });
-
-    // ctx.strokeText("Best DNA ever      : " + Math.floor(totalDistance(Global.bestDNA.genes)), 10, 20)
-    // ctx.strokeText("Best current DNA : " + Math.floor(totalDistance(Global.population[Global.indexBest].genes)), 10, 40)
   }
 }
 
 class Point {
-  constructor() {
-    this.x = Math.random() * WIDTH
-    this.y = Math.random() * HEIGHT
+  constructor(width, height) {
+    this.x = Math.random() * width
+    this.y = Math.random() * height
   }
+}
+
+const maximize = () => {
+  tsp.indice = 0
+  tsp.optimize = tsp.maximize
+}
+const minimize = () => {
+  tsp.indice = 0
+  tsp.optimize = tsp.minimize
+}
+const addPoint = () => {
+  tsp.nbPoints++
+  tsp.listPoints.push(new Point(width - 100, height - 100))
+  tsp.draw()
+}
+const removePoint = () => {
+  tsp.nbPoints--
+  tsp.listPoints.pop()
+  tsp.draw()
 }
 
 window.addEventListener('load', init)
