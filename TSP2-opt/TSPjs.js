@@ -26,13 +26,11 @@ const loop = () => {
   requestAnimationFrame(loop)
 }
 
-// TODO: Chose maximisation or min
 // TODO: Ne pas faire une boucle de 1 en 1 mais sauter aleatoirement 1 a 10 points,
 // OU AU LIEU DU RETURN QUI RECOMMENCE A 0 GARDER LES INDICES
-// TODO: Ajouter ou retirer points, de façon dynamique, en cours d'algo
 // TODO: Ajouter courbe evolution dst
 class TSP {
-  constructor(width, height, nbPoints = 10) {
+  constructor(width, height, nbPoints = 100) {
     this.nbPoints = nbPoints
     this.listPoints = []
     this.totalDst = 0
